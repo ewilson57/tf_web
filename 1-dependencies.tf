@@ -57,7 +57,7 @@ resource "azurerm_public_ip" "web" {
   resource_group_name = azurerm_resource_group.web.name
   location            = azurerm_resource_group.web.location
   allocation_method   = "Dynamic"
-  count = 2
+  count               = 2
 }
 
 resource "azurerm_network_interface" "web" {
