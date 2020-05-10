@@ -45,7 +45,7 @@ resource "azurerm_availability_set" "web" {
 }
 
 resource "azurerm_public_ip" "web-lb" {
-  name                = "${var.prefix}-lb-ip"
+  name                = "${var.prefix}-lb-publicip"
   location            = azurerm_resource_group.web.location
   resource_group_name = azurerm_resource_group.web.name
   allocation_method   = "Dynamic"
@@ -57,7 +57,7 @@ resource "azurerm_lb" "web" {
   resource_group_name = azurerm_resource_group.web.name
 
   frontend_ip_configuration {
-    name                 = "${var.prefix}-lb-frontend-ip-config"
+    name                 = "LoadBalancerFrontEnd"
     public_ip_address_id = azurerm_public_ip.web-lb.id
   }
 }
@@ -65,11 +65,11 @@ resource "azurerm_lb" "web" {
 resource "azurerm_lb_rule" "web" {
   resource_group_name            = azurerm_resource_group.web.name
   loadbalancer_id                = azurerm_lb.web.id
-  name                           = "HTTP"
+  name                           = "http-rule"
   protocol                       = "Tcp"
   frontend_port                  = 80
   backend_port                   = 80
-  frontend_ip_configuration_name = "${var.prefix}-lb-frontend-ip-config"
+  frontend_ip_configuration_name = "LoadBalancerFrontEnd"
 }
 
 resource "azurerm_lb_probe" "web" {
@@ -77,10 +77,15 @@ resource "azurerm_lb_probe" "web" {
   loadbalancer_id     = azurerm_lb.web.id
   name                = "http-probe"
   port                = 80
+  interval_in_seconds = 30
+  number_of_probes    = 2
 }
 
-resource "azurerm_lb_backend_address_pool" "example" {
+resource "azurerm_lb_backend_address_pool" "web" {
   resource_group_name = azurerm_resource_group.web.name
   loadbalancer_id     = azurerm_lb.web.id
-  name                = "BackEndAddressPool"
+  name                = "web-servers"
 }
+
+
+# terraform import azurerm_lb_backend_address_pool.web /subscriptions/17ab4402-2dfd-4268-b00e-ea8f97eb67f9/resourceGroups/web-resources/providers/Microsoft.Network/loadBalancers/web-lb/backendAddressPools/web-servers
