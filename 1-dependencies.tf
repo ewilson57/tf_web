@@ -53,14 +53,15 @@ resource "azurerm_subnet_network_security_group_association" "web" {
 }
 
 resource "azurerm_public_ip" "web" {
-  name                = "${var.prefix}-publicip"
+  name                = "${var.prefix}-${format("%03d", count.index)}-publicip"
   resource_group_name = azurerm_resource_group.web.name
   location            = azurerm_resource_group.web.location
   allocation_method   = "Dynamic"
+  count = 2
 }
 
 resource "azurerm_network_interface" "web" {
-  name                = "${var.prefix}-nic"
+  name                = "${var.prefix}-${format("%03d", count.index)}-nic"
   location            = azurerm_resource_group.web.location
   resource_group_name = azurerm_resource_group.web.name
 
@@ -68,6 +69,8 @@ resource "azurerm_network_interface" "web" {
     name                          = "configuration"
     subnet_id                     = azurerm_subnet.web.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.web.id
+    public_ip_address_id          = azurerm_public_ip.web[count.index].id
   }
+
+  count = 2
 }

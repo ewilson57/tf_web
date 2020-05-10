@@ -1,7 +1,6 @@
 variable "prefix" {
   description = "The Prefix used for all resources in this example"
   default     = "web"
-
 }
 
 variable "location" {
@@ -12,4 +11,9 @@ variable "location" {
 variable "router_wan_ip" {
   description = "The IP address of the routers external interface"
   default     = "192.180.173.26/32"
+}
+
+variable "admin_username" {
+  description = "The admin user"
+  default     = "spyro"
 }
