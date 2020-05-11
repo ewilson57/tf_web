@@ -65,7 +65,7 @@ resource "azurerm_lb" "web" {
 resource "azurerm_lb_rule" "web" {
   resource_group_name            = azurerm_resource_group.web.name
   loadbalancer_id                = azurerm_lb.web.id
-  name                           = "http-rule"
+  name                           = "http_rule"
   protocol                       = "Tcp"
   frontend_port                  = 80
   backend_port                   = 80
