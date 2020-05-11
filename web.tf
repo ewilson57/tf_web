@@ -91,7 +91,7 @@ resource "azurerm_lb_nat_rule" "web" {
   count                          = 2
   resource_group_name            = azurerm_resource_group.web.name
   loadbalancer_id                = azurerm_lb.web.id
-  name                           = azurerm_linux_virtual_machine.web[count.index]
+  name                           = azurerm_linux_virtual_machine.web[count.index].name
   protocol                       = "tcp"
   frontend_port                  = "5000${count.index + 1}"
   backend_port                   = "22"
