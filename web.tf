@@ -87,5 +87,13 @@ resource "azurerm_lb_backend_address_pool" "web" {
   name                = "web-servers"
 }
 
-
-# terraform import azurerm_lb_backend_address_pool.web /subscriptions/17ab4402-2dfd-4268-b00e-ea8f97eb67f9/resourceGroups/web-resources/providers/Microsoft.Network/loadBalancers/web-lb/backendAddressPools/web-servers
+resource "azurerm_lb_nat_rule" "web" {
+  count                          = 2
+  resource_group_name            = "${azurerm_resource_group.web.name}"
+  loadbalancer_id                = "${azurerm_lb.web.id}"
+  name                           = azurerm_linux_virtual_machine.web[count.index]
+  protocol                       = "tcp"
+  frontend_port                  = "5000${count.index + 1}"
+  backend_port                   = "22"
+  frontend_ip_configuration_name = "LoadBalancerFrontEnd"
+}
