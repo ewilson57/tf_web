@@ -17,3 +17,8 @@ variable "admin_username" {
   description = "The admin user"
   default     = ""
 }
+
+variable "admin_password" {
+  description = "admin password"
+  default = ""
+}
