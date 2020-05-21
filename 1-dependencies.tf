@@ -69,7 +69,7 @@ resource "azurerm_network_interface" "web" {
     name                          = "configuration"
     subnet_id                     = azurerm_subnet.web.id
     private_ip_address_allocation = "Dynamic"
-#     public_ip_address_id          = azurerm_public_ip.web[count.index].id
+    #     public_ip_address_id          = azurerm_public_ip.web[count.index].id
   }
 
   count = 2
