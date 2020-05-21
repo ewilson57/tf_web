@@ -16,7 +16,7 @@ resource "azurerm_linux_virtual_machine" "web" {
   availability_set_id             = azurerm_availability_set.web.id
   disable_password_authentication = true
   admin_username                  = var.admin_username
-  custom_data                     = var.ssh_key
+  custom_data                     = filebase64("files/web_bootstrap.sh")
 
   source_image_reference {
     publisher = "Canonical"
@@ -32,7 +32,7 @@ resource "azurerm_linux_virtual_machine" "web" {
 
   admin_ssh_key {
     username   = var.admin_username
-    public_key = file("~/.ssh/id_rsa_${var.admin_username}.pub")
+    public_key = var.ssh_key
   }
 
   count = 2
