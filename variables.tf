@@ -20,5 +20,10 @@ variable "admin_username" {
 
 variable "admin_password" {
   description = "admin password"
-  default = ""
+  default     = ""
+}
+
+variable "ssh_key" {
+  description = "ssh public key"
+  default     = ""
 }

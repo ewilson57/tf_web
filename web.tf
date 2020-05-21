@@ -16,7 +16,7 @@ resource "azurerm_linux_virtual_machine" "web" {
   availability_set_id             = azurerm_availability_set.web.id
   disable_password_authentication = true
   admin_username                  = var.admin_username
-  custom_data                     = filebase64("files/web_bootstrap.sh")
+  custom_data                     = var.ssh_key
 
   source_image_reference {
     publisher = "Canonical"
