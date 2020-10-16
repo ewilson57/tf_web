@@ -34,8 +34,8 @@ resource "azurerm_linux_virtual_machine" "web" {
     username   = var.admin_username
     public_key = var.ssh_key
   }
-
-  count = 2
+  depends_on = [azurerm_lb_rule.web]
+  count      = 2
 }
 
 resource "azurerm_availability_set" "web" {
@@ -93,7 +93,7 @@ resource "azurerm_lb_nat_rule" "web" {
   loadbalancer_id                = azurerm_lb.web.id
   name                           = azurerm_linux_virtual_machine.web[count.index].name
   protocol                       = "tcp"
-  frontend_port                  = "5000${count.index + 1}"
+  frontend_port                  = "5000${count.index}"
   backend_port                   = "22"
   frontend_ip_configuration_name = "LoadBalancerFrontEnd"
 }
