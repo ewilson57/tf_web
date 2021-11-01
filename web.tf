@@ -15,49 +15,26 @@ provider "azurerm" {
   }
 }
 
-resource "azurerm_availability_set" "web" {
-  name                = "${var.prefix}-avset"
-  location            = azurerm_resource_group.web.location
-  resource_group_name = azurerm_resource_group.web.name
-}
-
-resource "azurerm_linux_virtual_machine" "web" {
-  name                            = "${local.virtual_machine_name}-${format("%03d", count.index)}"
-  location                        = azurerm_resource_group.web.location
-  resource_group_name             = azurerm_resource_group.web.name
-  network_interface_ids           = [azurerm_network_interface.web[count.index].id]
-  size                            = "Standard_D1_v2"
-  availability_set_id             = azurerm_availability_set.web.id
-  disable_password_authentication = true
-  admin_username                  = var.admin_username
-  custom_data                     = filebase64("files/web_bootstrap.sh")
-
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "UbuntuServer"
-    sku       = "18.04-LTS"
-    version   = "latest"
-  }
-
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-  }
-
-  admin_ssh_key {
-    username   = var.admin_username
-    public_key = var.ssh_key
-  }
-  count      = 2
-  depends_on = [azurerm_lb_rule.web]
-}
-
 resource "azurerm_public_ip" "web-lb" {
   name                = "${var.prefix}-lb-publicip"
   location            = azurerm_resource_group.web.location
   resource_group_name = azurerm_resource_group.web.name
   allocation_method   = "Static"
 }
+
+resource "azurerm_network_interface_backend_address_pool_association" "web" {
+  network_interface_id    = azurerm_network_interface.web[count.index].id
+  ip_configuration_name   = "configuration"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.web.id
+  count                   = 2
+}
+
+resource "azurerm_availability_set" "web" {
+  name                = "${var.prefix}-avset"
+  location            = azurerm_resource_group.web.location
+  resource_group_name = azurerm_resource_group.web.name
+}
+
 
 resource "azurerm_lb" "web" {
   name                = "${var.prefix}-lb"
@@ -101,6 +78,38 @@ resource "azurerm_lb_probe" "web" {
   number_of_probes    = 2
 }
 
+resource "azurerm_linux_virtual_machine" "web" {
+  name                            = "${local.virtual_machine_name}-${format("%03d", count.index)}"
+  location                        = azurerm_resource_group.web.location
+  resource_group_name             = azurerm_resource_group.web.name
+  network_interface_ids           = [azurerm_network_interface.web[count.index].id]
+  size                            = "Standard_D1_v2"
+  availability_set_id             = azurerm_availability_set.web.id
+  disable_password_authentication = true
+  admin_username                  = var.admin_username
+  custom_data                     = filebase64("files/web_bootstrap.sh")
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "18.04-LTS"
+    version   = "latest"
+  }
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  admin_ssh_key {
+    username   = var.admin_username
+    public_key = var.ssh_key
+  }
+  count      = 2
+  depends_on = [azurerm_lb_rule.web]
+}
+
+
 resource "azurerm_lb_nat_rule" "web" {
   count                          = 2
   resource_group_name            = azurerm_resource_group.web.name
@@ -110,13 +119,6 @@ resource "azurerm_lb_nat_rule" "web" {
   frontend_port                  = "5000${count.index}"
   backend_port                   = "22"
   frontend_ip_configuration_name = "LoadBalancerFrontEnd"
-}
-
-resource "azurerm_network_interface_backend_address_pool_association" "web" {
-  network_interface_id    = azurerm_network_interface.web[count.index].id
-  ip_configuration_name   = "configuration"
-  backend_address_pool_id = azurerm_lb_backend_address_pool.web.id
-  count                   = 2
 }
 
 output "public_ip_addr" {
