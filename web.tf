@@ -1,3 +1,12 @@
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = ">=2.83.0"
+    }
+  }
+}
+
 provider "azurerm" {
   features {
     virtual_machine {
@@ -7,7 +16,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_availability_set" "web" {
-  name                = "${var.prefix}-aset"
+  name                = "${var.prefix}-avset"
   location            = azurerm_resource_group.web.location
   resource_group_name = azurerm_resource_group.web.name
 }
@@ -39,7 +48,7 @@ resource "azurerm_linux_virtual_machine" "web" {
     username   = var.admin_username
     public_key = var.ssh_key
   }
-  count = 2
+  count      = 2
   depends_on = [azurerm_lb_rule.web]
 }
 
@@ -68,9 +77,8 @@ locals {
 }
 
 resource "azurerm_lb_backend_address_pool" "web" {
-  resource_group_name = azurerm_resource_group.web.name
-  loadbalancer_id     = azurerm_lb.web.id
-  name                = local.azurerm_lb_backend_address_pool
+  loadbalancer_id = azurerm_lb.web.id
+  name            = local.azurerm_lb_backend_address_pool
 }
 
 resource "azurerm_lb_rule" "web" {
@@ -81,7 +89,6 @@ resource "azurerm_lb_rule" "web" {
   frontend_port                  = 80
   backend_port                   = 80
   frontend_ip_configuration_name = "LoadBalancerFrontEnd"
-  backend_address_pool_id        = azurerm_lb_backend_address_pool.web.id
   probe_id                       = azurerm_lb_probe.web.id
 }
 
@@ -110,4 +117,8 @@ resource "azurerm_network_interface_backend_address_pool_association" "web" {
   ip_configuration_name   = "configuration"
   backend_address_pool_id = azurerm_lb_backend_address_pool.web.id
   count                   = 2
+}
+
+output "public_ip_addr" {
+  value = azurerm_public_ip.web-lb.ip_address
 }

@@ -1,7 +1,5 @@
 locals {
   virtual_machine_name = "${var.prefix}-vm"
-  admin_username       = "testadmin"
-  admin_password       = "Password1234!"
 }
 
 resource "azurerm_resource_group" "web" {
