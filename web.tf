@@ -105,8 +105,8 @@ resource "azurerm_linux_virtual_machine" "web" {
     username   = var.admin_username
     public_key = var.ssh_key
   }
-  count      = 2
-  depends_on = [azurerm_lb_rule.web]
+  count = 2
+  #  depends_on = [azurerm_lb_rule.web]
 }
 
 
