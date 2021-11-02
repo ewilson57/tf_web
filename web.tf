@@ -15,71 +15,14 @@ provider "azurerm" {
   }
 }
 
-resource "azurerm_public_ip" "web-lb" {
-  name                = "${var.prefix}-lb-publicip"
-  location            = azurerm_resource_group.web.location
-  resource_group_name = azurerm_resource_group.web.name
-  allocation_method   = "Static"
-}
-
-resource "azurerm_network_interface_backend_address_pool_association" "web" {
-  network_interface_id    = azurerm_network_interface.web[count.index].id
-  ip_configuration_name   = "configuration"
-  backend_address_pool_id = azurerm_lb_backend_address_pool.web.id
-  count                   = 2
-}
-
 resource "azurerm_availability_set" "web" {
   name                = "${var.prefix}-avset"
   location            = azurerm_resource_group.web.location
   resource_group_name = azurerm_resource_group.web.name
 }
 
-
-resource "azurerm_lb" "web" {
-  name                = "${var.prefix}-lb"
-  location            = azurerm_resource_group.web.location
-  resource_group_name = azurerm_resource_group.web.name
-
-  frontend_ip_configuration {
-    name                 = "LoadBalancerFrontEnd"
-    public_ip_address_id = azurerm_public_ip.web-lb.id
-  }
-}
-
-locals {
-  azurerm_lb_backend_address_pool = "web-server-pool"
-  azurerm_lb_rule                 = "http-rule"
-  azurerm_lb_probe                = "http-probe"
-}
-
-resource "azurerm_lb_backend_address_pool" "web" {
-  loadbalancer_id = azurerm_lb.web.id
-  name            = local.azurerm_lb_backend_address_pool
-}
-
-resource "azurerm_lb_rule" "web" {
-  resource_group_name            = azurerm_resource_group.web.name
-  loadbalancer_id                = azurerm_lb.web.id
-  name                           = local.azurerm_lb_rule
-  protocol                       = "Tcp"
-  frontend_port                  = 80
-  backend_port                   = 80
-  frontend_ip_configuration_name = "LoadBalancerFrontEnd"
-  probe_id                       = azurerm_lb_probe.web.id
-}
-
-resource "azurerm_lb_probe" "web" {
-  resource_group_name = azurerm_resource_group.web.name
-  loadbalancer_id     = azurerm_lb.web.id
-  name                = local.azurerm_lb_probe
-  port                = 80
-  interval_in_seconds = 30
-  number_of_probes    = 2
-}
-
 resource "azurerm_linux_virtual_machine" "web" {
-  name                            = "${local.virtual_machine_name}-${format("%03d", count.index)}"
+  name                            = "${var.virtual_machine_name}-${format("%03d", count.index)}"
   location                        = azurerm_resource_group.web.location
   resource_group_name             = azurerm_resource_group.web.name
   network_interface_ids           = [azurerm_network_interface.web[count.index].id]
@@ -106,9 +49,57 @@ resource "azurerm_linux_virtual_machine" "web" {
     public_key = var.ssh_key
   }
   count = 2
-  #  depends_on = [azurerm_lb_rule.web]
 }
 
+resource "azurerm_public_ip" "web-lb" {
+  name                = "${var.prefix}-lb-publicip"
+  location            = azurerm_resource_group.web.location
+  resource_group_name = azurerm_resource_group.web.name
+  allocation_method   = "Static"
+}
+
+resource "azurerm_lb" "web" {
+  name                = "${var.prefix}-lb"
+  location            = azurerm_resource_group.web.location
+  resource_group_name = azurerm_resource_group.web.name
+
+  frontend_ip_configuration {
+    name                 = "LoadBalancerFrontEnd"
+    public_ip_address_id = azurerm_public_ip.web-lb.id
+  }
+}
+
+resource "azurerm_lb_backend_address_pool" "web" {
+  loadbalancer_id = azurerm_lb.web.id
+  name            = var.azurerm_lb_backend_address_pool
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "web" {
+  network_interface_id    = azurerm_network_interface.web[count.index].id
+  ip_configuration_name   = "configuration"
+  backend_address_pool_id = azurerm_lb_backend_address_pool.web.id
+  count                   = 2
+}
+
+resource "azurerm_lb_probe" "web" {
+  resource_group_name = azurerm_resource_group.web.name
+  loadbalancer_id     = azurerm_lb.web.id
+  name                = var.azurerm_lb_probe
+  port                = 80
+  interval_in_seconds = 30
+  number_of_probes    = 2
+}
+
+resource "azurerm_lb_rule" "web" {
+  resource_group_name            = azurerm_resource_group.web.name
+  loadbalancer_id                = azurerm_lb.web.id
+  name                           = var.azurerm_lb_rule
+  protocol                       = "Tcp"
+  frontend_port                  = 80
+  backend_port                   = 80
+  frontend_ip_configuration_name = "LoadBalancerFrontEnd"
+  probe_id                       = azurerm_lb_probe.web.id
+}
 
 resource "azurerm_lb_nat_rule" "web" {
   count                          = 2
