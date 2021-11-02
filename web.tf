@@ -21,6 +21,20 @@ resource "azurerm_availability_set" "web" {
   resource_group_name = azurerm_resource_group.web.name
 }
 
+resource "azurerm_network_interface" "web" {
+  name                = "${var.prefix}-${format("%03d", count.index)}-nic"
+  location            = azurerm_resource_group.web.location
+  resource_group_name = azurerm_resource_group.web.name
+
+  ip_configuration {
+    name                          = "configuration"
+    primary                       = true
+    subnet_id                     = azurerm_subnet.web.id
+    private_ip_address_allocation = "Dynamic"
+  }
+  count      = 2
+  depends_on = [azurerm_lb.web]
+}
 resource "azurerm_linux_virtual_machine" "web" {
   name                            = "${var.virtual_machine_name}-${format("%03d", count.index)}"
   location                        = azurerm_resource_group.web.location
